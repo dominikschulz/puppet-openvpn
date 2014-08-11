@@ -250,6 +250,10 @@
 #   String.  Value for commonName_default variable in openssl.cnf (and KEY_CN in vars)
 #   Default: None
 #
+# [*autostart*]
+#   String.  Whether to add this server to the list of configurations to be automatically started on boot.
+#   Default: true
+#
 # === Examples
 #
 #   openvpn::client {
@@ -345,6 +349,7 @@ define openvpn::server(
   $cipher = '',
   $persist_key = false,
   $persist_tun = false,
+  $autostart = true,
 ) {
 
   include openvpn
@@ -456,7 +461,7 @@ define openvpn::server(
       require => Exec["create crl.pem on ${name}"];
   }
 
-  if $::osfamily == 'Debian' {
+  if $::osfamily == 'Debian' and $autostart {
     concat::fragment {
       "openvpn.default.autostart.${name}":
         content => "AUTOSTART=\"\$AUTOSTART ${name}\"\n",
