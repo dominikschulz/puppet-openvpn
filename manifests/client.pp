@@ -94,6 +94,10 @@
 #     style attack from a malicious or compromised server.
 #   Default: {}
 #
+# [*expire*]
+#   Integer. Set a custom expiry time to pass to script.
+#   Default: {}
+#
 # === Examples
 #
 #   openvpn::client {
@@ -147,7 +151,8 @@ define openvpn::client(
   $cipher = '',
   $authuserpass = false,
   $setenv = {},
-  $setenv_safe = {}
+  $setenv_safe = {},
+  $expire = undef,
 ) {
 
   if $pam {
@@ -157,12 +162,18 @@ define openvpn::client(
   Openvpn::Server[$server] ->
   Openvpn::Client[$name]
 
+  if $expire {
+    $env_expire = "KEY_EXPIRE=${expire}"
+  } else {
+    $env_expire = ""
+  }
+
   exec {
     "generate certificate for ${name} in context of ${server}":
-      command  => ". ./vars && ./pkitool ${name}",
-      cwd      => "/etc/openvpn/${server}/easy-rsa",
-      creates  => "/etc/openvpn/${server}/easy-rsa/keys/${name}.crt",
-      provider => 'shell';
+      command     => ". ./vars && ${env_expire} ./pkitool ${name}",
+      cwd         => "/etc/openvpn/${server}/easy-rsa",
+      creates     => "/etc/openvpn/${server}/easy-rsa/keys/${name}.crt",
+      provider    => 'shell';
   }
 
   file {
@@ -190,20 +201,7 @@ define openvpn::client(
       group   => root,
       mode    => '0444',
       content => template('openvpn/client.erb'),
-      notify  => Exec["tar the thing ${server} with ${name}"];
-  }
-
-  exec {
-    "tar the thing ${server} with ${name}":
-      cwd         => "/etc/openvpn/${server}/download-configs/",
-      command     => "/bin/rm ${name}.tar.gz; tar --exclude=\\*.conf.d -chzvf ${name}.tar.gz ${name}",
-      refreshonly => true,
-      require     => [  File["/etc/openvpn/${server}/download-configs/${name}/${name}.conf"],
-                        File["/etc/openvpn/${server}/download-configs/${name}/keys/ca.crt"],
-                        File["/etc/openvpn/${server}/download-configs/${name}/keys/${name}.key"],
-                        File["/etc/openvpn/${server}/download-configs/${name}/keys/${name}.crt"]
-                      ],
-      notify      => Exec["generate ${name}.ovpn in ${server}"];
+      notify  => Exec["generate ${name}.ovpn in ${server}"];
   }
 
   $name_escaped = regsubst(regsubst($name, '\.', '\\.', 'G'), '@', '\\@', 'G')
@@ -222,5 +220,34 @@ define openvpn::client(
   file { "/etc/openvpn/${server}/download-configs/${name}.ovpn":
     mode    => '0400',
     require => Exec["generate ${name}.ovpn in ${server}"],
+    notify  => Exec["tar the thing ${server} with ${name}"],
   }
+
+  file {
+    "/etc/openvpn/${server}/download-configs/${name}.tblk":
+      ensure  => directory;
+
+    "/etc/openvpn/${server}/download-configs/${name}.tblk/${name}.ovpn":
+      ensure  => link,
+      target  => "/etc/openvpn/${server}/download-configs/${name}.ovpn",
+      require => [  Exec["generate ${name}.ovpn in ${server}"],
+                    File["/etc/openvpn/${server}/download-configs/${name}.tblk"]
+                 ];
+  }
+
+  exec {
+    "tar the thing ${server} with ${name}":
+      cwd         => "/etc/openvpn/${server}/download-configs/",
+      command     => "/bin/rm ${name}.tar.gz; tar --exclude=\\*.conf.d -chzvf ${name}.tar.gz ${name} ${name}.tblk",
+      refreshonly => true,
+      require     => [  File["/etc/openvpn/${server}/download-configs/${name}/${name}.conf"],
+                        File["/etc/openvpn/${server}/download-configs/${name}/keys/ca.crt"],
+                        File["/etc/openvpn/${server}/download-configs/${name}/keys/${name}.key"],
+                        File["/etc/openvpn/${server}/download-configs/${name}/keys/${name}.crt"],
+                        File["/etc/openvpn/${server}/download-configs/${name}.ovpn"],
+                        File["/etc/openvpn/${server}/download-configs/${name}.tblk"],
+                        File["/etc/openvpn/${server}/download-configs/${name}.tblk/${name}.ovpn"],
+                      ],
+  }
+
 }
