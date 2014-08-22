@@ -153,6 +153,8 @@ define openvpn::client(
   $setenv = {},
   $setenv_safe = {},
   $expire = undef,
+  $up = undef,
+  $down = undef,
 ) {
 
   if $pam {
