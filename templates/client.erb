@@ -2,6 +2,7 @@ client
 ca keys/ca.crt
 cert keys/<%= scope.lookupvar('name') %>.crt
 key keys/<%= scope.lookupvar('name') %>.key
+tls-auth keys/tls-auth.key 1
 dev <%= scope.lookupvar('dev') %>
 proto <%= scope.lookupvar('proto') %>
 remote <%= scope.lookupvar('remote_host') %> <%= scope.lookupvar('port') %>

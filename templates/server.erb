@@ -5,6 +5,7 @@ cert /etc/openvpn/<%= scope.lookupvar('name') %>/keys/<%= scope.lookupvar('commo
 key /etc/openvpn/<%= scope.lookupvar('name') %>/keys/<%= scope.lookupvar('common_name') %>.key
 dh /etc/openvpn/<%= scope.lookupvar('name') %>/keys/dh<%= scope.lookupvar('ssl_key_size') %>.pem
 crl-verify /etc/openvpn/<%= scope.lookupvar('name') %>/crl.pem
+tls-auth /etc/openvpn/<%= scope.lookupvar('name') %>/keys/tls-auth.key 0
 <% if scope.lookupvar('proto') == 'tcp' -%>
 proto <%= scope.lookupvar('proto') %>-server
 <% else -%>
