@@ -69,6 +69,7 @@
 # limitations under the License.
 #
 define openvpn::client_specific_config(
+  $ensure           = 'present',
   $server,
   $iroute           = [],
   $route            = [],
@@ -82,7 +83,7 @@ define openvpn::client_specific_config(
   Openvpn::Client_specific_config[$name]
 
   file { "/etc/openvpn/${server}/client-configs/${name}":
-    ensure  => present,
+    ensure  => $ensure,
     content => template('openvpn/client_specific_config.erb')
   }
 

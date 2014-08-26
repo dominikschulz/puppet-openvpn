@@ -454,20 +454,20 @@ define openvpn::server(
       require  => Exec["generate server cert ${name}"];
   }
 
+  file {
+    "/etc/openvpn/${name}/easy-rsa/keys/crl.pem":
+      ensure  => link,
+      target  => "/etc/openvpn/${name}/crl.pem",
+      require => Exec["create crl.pem on ${name}"];
+  }
+
   exec {
     "create tls-auth key file on ${name}":
       command  => "openvpn --genkey --secret /etc/openvpn/${name}/easy-rsa/keys/tls-auth.key",
       cwd      => "/etc/openvpn/${name}",
       creates  => "/etc/openvpn/${name}/easy-rsa/keys/tls-auth.key",
       provider => 'shell',
-      require  => Exec["copy easy-rsa to openvpn config folder ${name}"];
-  }
-
-  file {
-    "/etc/openvpn/${name}/easy-rsa/keys/crl.pem":
-      ensure  => link,
-      target  => "/etc/openvpn/${name}/crl.pem",
-      require => Exec["create crl.pem on ${name}"];
+      require  => File["/etc/openvpn/${name}/easy-rsa/keys/crl.pem"];
   }
 
   if $::osfamily == 'Debian' and $autostart {
