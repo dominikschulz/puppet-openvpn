@@ -44,3 +44,6 @@ up <%= scope.lookupvar('up') %>
 <% if scope.lookupvar('down') -%>
 down <%= scope.lookupvar('up') %>
 <% end -%>
+<% if scope.lookupvar('up') or scope.lookupvar('down') -%>
+script-security 2
+<% end -%>
