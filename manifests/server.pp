@@ -349,7 +349,7 @@ define openvpn::server(
   $cipher = '',
   $persist_key = false,
   $persist_tun = false,
-  $autostart = true,
+  $autostart = false,
 ) {
 
   include openvpn
