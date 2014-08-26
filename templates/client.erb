@@ -20,7 +20,7 @@ persist-key
 <% if scope.lookupvar('persist_tun') -%>
 persist-tun
 <% end -%>
-<% if scope.lookupvar('cipher')  -%>
+<% if scope.lookupvar('cipher') != '' -%>
 cipher <%= scope.lookupvar('cipher') %>
 <% end %>
 <% if scope.lookupvar('mute_replay_warnings') -%>
