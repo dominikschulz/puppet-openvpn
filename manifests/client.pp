@@ -153,6 +153,9 @@ define openvpn::client(
   $setenv = {},
   $setenv_safe = {},
   $expire = undef,
+  $up = undef,
+  $down = undef,
+  $readme = undef,
 ) {
 
   if $pam {
@@ -196,6 +199,11 @@ define openvpn::client(
       target  => "/etc/openvpn/${server}/easy-rsa/keys/ca.crt",
       require => Exec["generate certificate for ${name} in context of ${server}"];
 
+    "/etc/openvpn/${server}/download-configs/${name}/keys/tls-auth.key":
+      ensure  => link,
+      target  => "/etc/openvpn/${server}/easy-rsa/keys/tls-auth.key",
+      require => Exec["generate certificate for ${name} in context of ${server}"];
+
     "/etc/openvpn/${server}/download-configs/${name}/${name}.conf":
       owner   => root,
       group   => root,
@@ -204,11 +212,23 @@ define openvpn::client(
       notify  => Exec["generate ${name}.ovpn in ${server}"];
   }
 
+  if $readme {
+    file {
+      "/etc/openvpn/${server}/download-configs/${name}/README":
+        ensure  => file,
+        owner   => root,
+        group   => root,
+        mode    => '0444',
+        content => $readme,
+        notify  => Exec["tar the thing ${server} with ${name}"];
+    }
+  }
+
   $name_escaped = regsubst(regsubst($name, '\.', '\\.', 'G'), '@', '\\@', 'G')
   exec {
     "generate ${name}.ovpn in ${server}":
       cwd         => "/etc/openvpn/${server}/download-configs/",
-      command     => "/bin/rm ${name}.ovpn; cat ${name}/${name}.conf|perl -lne 'if(m|^ca keys/ca.crt|){ chomp(\$ca=`cat ${name_escaped}/keys/ca.crt`); print \"<ca>\n\$ca\n</ca>\"} elsif(m|^cert keys/${name_escaped}.crt|) { chomp(\$crt=`cat ${name_escaped}/keys/${name_escaped}.crt`); print \"<cert>\n\$crt\n</cert>\"} elsif(m|^key keys/${name_escaped}.key|){ chomp(\$key=`cat ${name_escaped}/keys/${name_escaped}.key`); print \"<key>\n\$key\n</key>\"} else { print} ' > ${name}.ovpn",
+      command     => "/bin/rm ${name}.ovpn; cat ${name}/${name}.conf|perl -lne 'if(m|^ca keys/ca.crt|){ chomp(\$ca=`cat ${name_escaped}/keys/ca.crt`); print \"<ca>\n\$ca\n</ca>\"} elsif(m|^cert keys/${name_escaped}.crt|) { chomp(\$crt=`cat ${name_escaped}/keys/${name_escaped}.crt`); print \"<cert>\n\$crt\n</cert>\"} elsif(m|^key keys/${name_escaped}.key|){ chomp(\$key=`cat ${name_escaped}/keys/${name_escaped}.key`); print \"<key>\n\$key\n</key>\"} elsif(m|^(tls-auth) (keys/tls-auth.key)( .+)?|){ chomp(\$tlsauth=`cat ${name_escaped}/keys/tls-auth.key`); print \"<tls-auth>\n\$tlsauth\n</tls-auth>\nkey-direction 1\"} elsif(m/^(up|down) /){ next; } else { print} ' > ${name}.ovpn",
       refreshonly => true,
       require     => [  File["/etc/openvpn/${server}/download-configs/${name}/${name}.conf"],
                         File["/etc/openvpn/${server}/download-configs/${name}/keys/ca.crt"],
