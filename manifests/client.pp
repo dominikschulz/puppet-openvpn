@@ -230,11 +230,13 @@ define openvpn::client(
       cwd         => "/etc/openvpn/${server}/download-configs/",
       command     => "/bin/rm ${name}.ovpn; cat ${name}/${name}.conf|perl -lne 'if(m|^ca keys/ca.crt|){ chomp(\$ca=`cat ${name_escaped}/keys/ca.crt`); print \"<ca>\n\$ca\n</ca>\"} elsif(m|^cert keys/${name_escaped}.crt|) { chomp(\$crt=`cat ${name_escaped}/keys/${name_escaped}.crt`); print \"<cert>\n\$crt\n</cert>\"} elsif(m|^key keys/${name_escaped}.key|){ chomp(\$key=`cat ${name_escaped}/keys/${name_escaped}.key`); print \"<key>\n\$key\n</key>\"} elsif(m|^(tls-auth) (keys/tls-auth.key)( .+)?|){ chomp(\$tlsauth=`cat ${name_escaped}/keys/tls-auth.key`); print \"<tls-auth>\n\$tlsauth\n</tls-auth>\nkey-direction 1\"} elsif(m/^(up|down) /){ next; } else { print} ' > ${name}.ovpn",
       refreshonly => true,
-      require     => [  File["/etc/openvpn/${server}/download-configs/${name}/${name}.conf"],
-                        File["/etc/openvpn/${server}/download-configs/${name}/keys/ca.crt"],
-                        File["/etc/openvpn/${server}/download-configs/${name}/keys/${name}.key"],
-                        File["/etc/openvpn/${server}/download-configs/${name}/keys/${name}.crt"],
-                      ],
+      require     => [
+        File["/etc/openvpn/${server}/download-configs/${name}/${name}.conf"],
+        File["/etc/openvpn/${server}/download-configs/${name}/keys/ca.crt"],
+        File["/etc/openvpn/${server}/download-configs/${name}/keys/${name}.key"],
+        File["/etc/openvpn/${server}/download-configs/${name}/keys/${name}.crt"],
+        File["/etc/openvpn/${server}/download-configs/${name}/keys/tls-auth.key"],
+      ],
   }
 
   file { "/etc/openvpn/${server}/download-configs/${name}.ovpn":
@@ -250,9 +252,10 @@ define openvpn::client(
     "/etc/openvpn/${server}/download-configs/${name}.tblk/${name}.ovpn":
       ensure  => link,
       target  => "/etc/openvpn/${server}/download-configs/${name}.ovpn",
-      require => [  Exec["generate ${name}.ovpn in ${server}"],
-                    File["/etc/openvpn/${server}/download-configs/${name}.tblk"]
-                 ];
+      require => [
+        Exec["generate ${name}.ovpn in ${server}"],
+        File["/etc/openvpn/${server}/download-configs/${name}.tblk"],
+      ];
   }
 
   exec {
@@ -260,14 +263,17 @@ define openvpn::client(
       cwd         => "/etc/openvpn/${server}/download-configs/",
       command     => "/bin/rm ${name}.tar.gz; tar --exclude=\\*.conf.d -chzvf ${name}.tar.gz ${name} ${name}.tblk",
       refreshonly => true,
-      require     => [  File["/etc/openvpn/${server}/download-configs/${name}/${name}.conf"],
-                        File["/etc/openvpn/${server}/download-configs/${name}/keys/ca.crt"],
-                        File["/etc/openvpn/${server}/download-configs/${name}/keys/${name}.key"],
-                        File["/etc/openvpn/${server}/download-configs/${name}/keys/${name}.crt"],
-                        File["/etc/openvpn/${server}/download-configs/${name}.ovpn"],
-                        File["/etc/openvpn/${server}/download-configs/${name}.tblk"],
-                        File["/etc/openvpn/${server}/download-configs/${name}.tblk/${name}.ovpn"],
-                      ],
+      require     => [
+        File["/etc/openvpn/${server}/download-configs/${name}/${name}.conf"],
+        File["/etc/openvpn/${server}/download-configs/${name}/keys/ca.crt"],
+        File["/etc/openvpn/${server}/download-configs/${name}/keys/${name}.key"],
+        File["/etc/openvpn/${server}/download-configs/${name}/keys/${name}.crt"],
+        File["/etc/openvpn/${server}/download-configs/${name}/keys/tls-auth.key"],
+        File["/etc/openvpn/${server}/download-configs/${name}.ovpn"],
+        File["/etc/openvpn/${server}/download-configs/${name}.tblk"],
+        File["/etc/openvpn/${server}/download-configs/${name}.tblk/${name}.ovpn"],
+      ],
   }
 
 }
+
