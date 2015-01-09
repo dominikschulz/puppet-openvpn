@@ -58,6 +58,9 @@ verb <%= scope.lookupvar('verb') %>
 <% if scope.lookupvar('cipher') != '' -%>
 cipher <%= scope.lookupvar('cipher') %>
 <% end -%>
+<% if scope.lookupvar('tls_cipher') != '' -%>
+tls-cipher <%= scope.lookupvar('tls_cipher') %>
+<% end %>
 <% if scope.lookupvar('c2c') -%>
 client-to-client
 <% end -%>

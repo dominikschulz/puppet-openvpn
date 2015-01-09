@@ -220,6 +220,10 @@
 #   String,  Cipher to use for packet encryption
 #   Default: None
 #
+# [*tls_cipher*]
+#   String, TLS Ciphers to use
+#   Default: None
+#
 # [*persist_key*]
 #   Boolean.  Try to retain access to resources that may be unavailable
 #     because of privilege downgrades
@@ -347,6 +351,7 @@ define openvpn::server(
   $key_ou = '',
   $verb = '',
   $cipher = '',
+  $tls_cipher = '',
   $persist_key = false,
   $persist_tun = false,
   $autostart = false,

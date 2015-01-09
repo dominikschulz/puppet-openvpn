@@ -23,6 +23,9 @@ persist-tun
 <% if scope.lookupvar('cipher') != '' -%>
 cipher <%= scope.lookupvar('cipher') %>
 <% end %>
+<% if scope.lookupvar('tls_cipher') != '' -%>
+tls-cipher <%= scope.lookupvar('tls_cipher') %>
+<% end %>
 <% if scope.lookupvar('mute_replay_warnings') -%>
 mute-replay-warnings
 <% end -%>
